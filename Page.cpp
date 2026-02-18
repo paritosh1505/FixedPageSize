@@ -19,9 +19,10 @@ PageSize AddFileInit(PageSize p) {
     close(fd);
     return PageSize{};
   }
-  ssize_t rr = read(wr, &readMem, sizeof(PageSize));
+  lseek(fd, 0, SEEK_SET);
+  ssize_t rr = read(fd, &readMem, sizeof(PageSize));
+  close(fd);
   if (rr != sizeof(PageSize)) {
-    close(fd);
     return PageSize{};
   }
   return readMem;
