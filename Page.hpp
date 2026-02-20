@@ -16,3 +16,4 @@ struct PageSize {
 
 PageSize CreatePageInit();
 PageSize AddFileInit(PageSize);
+void insert_Record(PageSize &, const char *);
