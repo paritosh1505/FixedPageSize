@@ -17,3 +17,5 @@ struct PageSize {
 PageSize CreatePageInit();
 PageSize AddFileInit(PageSize);
 void insert_Record(PageSize &, const char *);
+void print_page_records(PageSize &);
+int test();

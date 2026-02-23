@@ -4,6 +4,9 @@
 #include <cstdio>
 #include <cstring>
 #include <fcntl.h> //O_Create and O_Readonly
+#include <fstream>
+#include <iomanip>
+#include <ios>
 #include <iostream>
 #include <stdexcept>
 #include <unistd.h>
@@ -36,21 +39,49 @@ void insert_Record(PageSize &p, const char *text) {
   int fd = open("db.bin", O_CREAT | O_RDWR, 0644);
   if (fd < 0)
     throw std::runtime_error("Error in the file");
-  size_t lenval = strlen(text);
-  uint16_t sizecompr = static_cast<uint16_t>(lenval);
-  std::cout << "*******" << p.header.free_space_offset << "####" << "\n";
+  int lenval = strlen(text); // strlen return type is size_t
+  uint16_t sizecompr = static_cast<uint16_t>(
+      lenval); // since format required is [05 00]=2 byte hence uint16_t used
   uint8_t *write_ptr = p.Datasize + p.header.free_space_offset;
 
-  std::memcpy(write_ptr, &sizecompr, sizeof(sizecompr));
+  std::memcpy(write_ptr, &sizecompr, sizeof(sizecompr)); // adding 05 00 first
   std::memcpy(write_ptr + sizeof(sizecompr), text, static_cast<size_t>(lenval));
-  std::cout << "*******" << write_ptr << "\n";
   p.header.record_count += 1;
-  std::cout << "*******" << p.header.free_space_offset << "####" << "\n";
-
   p.header.free_space_offset =
       p.header.free_space_offset + strlen(text) + sizeof(uint16_t);
   lseek(fd, p.header.free_space_offset, SEEK_SET);
   int wr = write(fd, write_ptr, sizeof(sizecompr) + lenval);
 
   close(fd);
+}
+
+#include <cstring>
+#include <iostream>
+
+void print_page_records(PageSize &page) {
+  uint16_t offset = sizeof(PageHeader);
+  uint16_t size;
+
+  for (uint16_t i = 0; i < page.header.record_count; ++i) {
+    std::memcpy(&size, page.Datasize + offset, sizeof(uint16_t));
+    std::string Record(reinterpret_cast<char *>(page.Datasize + offset + 2),
+                       size);
+    offset = offset + size + 2;
+    std::cout << Record << "\n";
+  }
+}
+int test() {
+  std::ifstream file("db.bin", std::ios::binary);
+  if (!file) {
+    std::cerr << "Cannot open file\n";
+    return 1;
+  }
+
+  unsigned char byte;
+
+  while (file.read(reinterpret_cast<char *>(&byte), 1)) {
+    std::cout << std::hex << std::setw(2) << std::setfill('0')
+              << static_cast<int>(byte) << " ";
+  }
+  return 0;
 }
