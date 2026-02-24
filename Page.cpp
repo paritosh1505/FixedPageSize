@@ -4,9 +4,6 @@
 #include <cstdio>
 #include <cstring>
 #include <fcntl.h> //O_Create and O_Readonly
-#include <fstream>
-#include <iomanip>
-#include <ios>
 #include <iostream>
 #include <stdexcept>
 #include <unistd.h>
@@ -14,6 +11,7 @@ PageSize CreatePageInit() {
   PageSize p;
   p.header.page_id = 0;
   p.header.record_count = 0;
+  p.header.version = 1;
   p.header.free_space_offset = sizeof(PageHeader);
   return p;
 }
@@ -55,9 +53,6 @@ void insert_Record(PageSize &p, const char *text) {
   close(fd);
 }
 
-#include <cstring>
-#include <iostream>
-
 void print_page_records(PageSize &page) {
   uint16_t offset = sizeof(PageHeader);
   uint16_t size;
@@ -69,19 +64,4 @@ void print_page_records(PageSize &page) {
     offset = offset + size + 2;
     std::cout << Record << "\n";
   }
-}
-int test() {
-  std::ifstream file("db.bin", std::ios::binary);
-  if (!file) {
-    std::cerr << "Cannot open file\n";
-    return 1;
-  }
-
-  unsigned char byte;
-
-  while (file.read(reinterpret_cast<char *>(&byte), 1)) {
-    std::cout << std::hex << std::setw(2) << std::setfill('0')
-              << static_cast<int>(byte) << " ";
-  }
-  return 0;
 }
