@@ -9,9 +9,10 @@
 #include <unistd.h>
 PageSize CreatePageInit() {
   PageSize p;
+
   p.header.page_id = 0;
   p.header.record_count = 0;
-  p.header.version = 1;
+  p.header.page_version = 1;
   p.header.free_space_offset = sizeof(PageHeader);
   return p;
 }
@@ -37,7 +38,7 @@ void insert_Record(PageSize &p, const char *text) {
   int fd = open("db.bin", O_CREAT | O_RDWR, 0644);
   if (fd < 0)
     throw std::runtime_error("Error in the file");
-  int lenval = strlen(text); // strlen return type is size_t
+  size_t lenval = strlen(text); // strlen return type is size_t
   uint16_t sizecompr = static_cast<uint16_t>(
       lenval); // since format required is [05 00]=2 byte hence uint16_t used
   uint8_t *write_ptr = p.Datasize + p.header.free_space_offset;
@@ -45,16 +46,16 @@ void insert_Record(PageSize &p, const char *text) {
   std::memcpy(write_ptr, &sizecompr, sizeof(sizecompr)); // adding 05 00 first
   std::memcpy(write_ptr + sizeof(sizecompr), text, static_cast<size_t>(lenval));
   p.header.record_count += 1;
-  p.header.free_space_offset =
-      p.header.free_space_offset + strlen(text) + sizeof(uint16_t);
+  p.header.free_space_offset = static_cast<uint16_t>(
+      p.header.free_space_offset + lenval + sizeof(uint16_t));
   lseek(fd, p.header.free_space_offset, SEEK_SET);
-  int wr = write(fd, write_ptr, sizeof(sizecompr) + lenval);
+  write(fd, write_ptr, sizeof(sizecompr) + lenval);
 
   close(fd);
 }
 
 void print_page_records(PageSize &page) {
-  uint16_t offset = sizeof(PageHeader);
+  size_t offset = sizeof(PageHeader);
   uint16_t size;
 
   for (uint16_t i = 0; i < page.header.record_count; ++i) {

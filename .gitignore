@@ -1,2 +1,4 @@
-a.out
+.cache
+.vscode
+build
 db.bin
